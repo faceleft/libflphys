@@ -7,26 +7,20 @@ const double PHYS_AIR_DENSITY = 1.225;
 const double PHYS_ACCEL_OF_FREE_FALL = 9.80665;
 const double PHYS_BALL_DRAG_COEF = 0.47;
 
-pvec_t pvec_scs_create(double len, double xy_angle, double zy_angle) {
+pvec_t pvec_scs_create(double len, double xy_angle) {
     return (pvec_t) {
-        .x = len * sin(zy_angle) * cos(xy_angle),
-        .y = len * sin(zy_angle) * sin(xy_angle),
-        .z = len * cos(zy_angle)
+        .x = len * cos(xy_angle),
+        .y = len * sin(xy_angle),
     };
 }
 
 double pvec_len(pvec_t vector) {
-    return sqrt(vector.x*vector.x + vector.y*vector.y + vector.z*vector.z);
+    return sqrt(vector.x*vector.x + vector.y*vector.y);
 }
 
 double pvec_xy_angle(pvec_t vector) {
     if(vector.x == 0) return PHYS_PI/2.0;
     return atan(vector.y/vector.x);
-}
-
-double pvec_zy_angle(pvec_t vector) {
-    if(vector.z == 0) return PHYS_PI/2.0;
-    return atan(sqrt(vector.x*vector.x+vector.y*vector.y)/vector.z);
 }
 
 pobj_t pobj_create(pvec_t pos, pvec_t mov, double mass, double radius) {
@@ -37,7 +31,7 @@ pobj_t pobj_create(pvec_t pos, pvec_t mov, double mass, double radius) {
         .radius = radius, 
         .area = (PHYS_PI * radius * radius), 
         .volume = ((4.0L/3.0L) * PHYS_PI * radius * radius * radius),
-        .force = (pvec_t) {0,0,0}
+        .force = (pvec_t) {0}
     };
 }
 
@@ -46,16 +40,13 @@ pres_t pobj_run(pobj_t * obj, double time) {
         return ERR_ZERO_MASS;
     };
     pvec_t acceleration = {.x = obj->force.x/obj->mass,
-                              .y = obj->force.y/obj->mass,
-                              .z = obj->force.z/obj->mass,};
+                           .y = obj->force.y/obj->mass,};
 
     obj->pos.x += (obj->mov.x + acceleration.x * time * 0.5L) * time;
     obj->pos.y += (obj->mov.y + acceleration.y * time * 0.5L) * time;
-    obj->pos.z += (obj->mov.z + acceleration.z * time * 0.5L) * time;
 
     obj->mov.x += acceleration.x * time;
     obj->mov.y += acceleration.y * time;
-    obj->mov.z += acceleration.z * time;
     return OK;
 }
 
@@ -102,8 +93,7 @@ static pres_t objects_force_compute(const phys_t * phys, pobj_t * obj) {
 
     pvec_t real_obj_mov = {
         obj->mov.x - phys->wind.x,
-        obj->mov.y - phys->wind.y,
-        obj->mov.z - phys->wind.z,         
+        obj->mov.y - phys->wind.y,      
     };
 
     double real_obj_speed = pvec_len(real_obj_mov);
@@ -120,12 +110,10 @@ static pres_t objects_force_compute(const phys_t * phys, pobj_t * obj) {
         double k = air_f/real_obj_speed;
         obj->force.x -= real_obj_mov.x * k;
         obj->force.y -= real_obj_mov.y * k;
-        obj->force.z -= real_obj_mov.z * k;
     }
 
     obj->force.x += phys->accel_of_gravity.x * real_mass;
     obj->force.y += phys->accel_of_gravity.y * real_mass;
-    obj->force.z += phys->accel_of_gravity.z * real_mass;
     
     if (phys->is_gravity && phys->objects_num>1) {
         for(size_t i = 0; i<phys->objects_num; i++) {
@@ -133,8 +121,7 @@ static pres_t objects_force_compute(const phys_t * phys, pobj_t * obj) {
             if (other_obj != obj) {
                 
                 pvec_t dist = {.x = obj->pos.x - other_obj->pos.x,
-                                  .y = obj->pos.y - other_obj->pos.y,
-                                  .z = obj->pos.z - other_obj->pos.z};
+                               .y = obj->pos.y - other_obj->pos.y,};
 
                 double dist_len = pvec_len(dist);
                 if(dist_len == 0) return ERR_ZERO_DIST;
@@ -147,7 +134,6 @@ static pres_t objects_force_compute(const phys_t * phys, pobj_t * obj) {
                 double k = gravy_f/dist_len;
                 obj->force.x -= dist.x * k;
                 obj->force.y -= dist.y * k;
-                obj->force.z -= dist.z * k;
             }
         }
     }

@@ -14,7 +14,6 @@ extern const double PHYS_BALL_DRAG_COEF;      //0.47
 typedef struct {
    double x; // m | m/s | N
    double y; // m | m/s | N
-   double z; // m | m/s | N
 } pvec_t;
 
 typedef struct {
@@ -46,16 +45,13 @@ typedef enum {
 } pres_t;
 
 //returns a new initialized vector using length, XOY angle and ZOY angle
-pvec_t pvec_scs_create(double len, double xy_angle, double zy_angle);
+pvec_t pvec_scs_create(double len, double xy_angle);
 
 //calculates the length of the vector
 double pvec_len(pvec_t vector);
 
 //calculates the XOY angle of the vector
 double pvec_xy_angle(pvec_t vector);
-
-//calculates the ZOY angle of the vector
-double pvec_zy_angle(pvec_t vector);
 
 //returns a new initialized vector using position, movement, mass and radius
 pobj_t pobj_create(pvec_t pos, pvec_t mov, double mass, double radius);
